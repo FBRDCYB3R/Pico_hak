@@ -25,7 +25,7 @@ $bodyLines = @(
     "Content-Disposition: form-data; name=`"document`"; filename=`"$(Split-Path $filePath -Leaf)`"",
     "Content-Type: application/octet-stream",
     "",
-    [System.IO.File]::ReadAllText($filePath),
+    [System.IO.File]::ReadAllBytes($filePath),
     "--$boundary--"
 )
 
@@ -33,27 +33,9 @@ $bodyLines = @(
 $body = $bodyLines -join "`r`n"
 
 # Create the HTTP request
-$request = [System.Net.HttpWebRequest]::Create($apiUrl)
-$request.Method = "POST"
-$request.ContentType = "multipart/form-data; boundary=$boundary"
-$request.ContentLength = $body.Length
-
-# Write the body to the request stream
 try {
-    $requestStream = $request.GetRequestStream()
-    $writer = New-Object System.IO.StreamWriter($requestStream)
-    $writer.Write($body)
-    $writer.Close()
-
-    # Get the response
-    $response = $request.GetResponse()
-    $responseStream = $response.GetResponseStream()
-    $reader = New-Object System.IO.StreamReader($responseStream)
-    $responseText = $reader.ReadToEnd()
-    $reader.Close()
-
-    # Output the response
-    Write-Output "Upload successful! Response: $responseText"
+    $response = Invoke-RestMethod -Uri $apiUrl -Method Post -ContentType "multipart/form-data; boundary=$boundary" -Body $body
+    Write-Output "Upload successful! Response: $($response | ConvertTo-Json)"
 } catch {
     Write-Output "Upload failed. Error: $_"
 }
